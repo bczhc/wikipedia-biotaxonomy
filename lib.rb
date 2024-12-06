@@ -7,9 +7,9 @@ class Taxon
     @sci_name = sci_name
     @skip = false
     @page_url = page_url
-    if @sci_name != nil
-      fail "Invalid #{@sci_name}" unless /^[A-Z][a-zA-Z]+$/.match? @sci_name
-    end
+    # if @sci_name != nil
+    #   fail "Invalid #{@sci_name}" unless /^[A-Z][a-zA-Z]+$/.match? @sci_name
+    # end
   end
 
   def self.skip

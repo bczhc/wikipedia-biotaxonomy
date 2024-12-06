@@ -1,3 +1,5 @@
+require_relative 'lib'
+
 ValueType = Taxon
 
 class Node
@@ -33,20 +35,31 @@ class Node
   end
 
   # @param lineage [Array<Taxon>]
+  def self.from_lineage(lineage)
+    fail 'Lineage is empty' if lineage.empty?
+    node = Node.new lineage.last, []
+    lineage.reverse.drop(1).each do |taxon|
+      node = Node.new taxon, [node]
+    end
+    node
+  end
+
+  # @param lineage [Array<Taxon>]
   def insert_lineage(lineage)
-    catch(:done) do
-      while true
-        (0...lineage.length).reverse_each do |i|
-          found = find_node lineage[i]
-          if found != nil
-            throw :done if i + 1 >= lineage.length
-            next_name = lineage[i + 1]
-            found.children.push(Node.new(next_name, []))
-            break
-          end
-        end
+    found = nil
+
+    (0...lineage.length).reverse_each do |i|
+      node = find_node lineage[i]
+      if node != nil
+        found = { index: i, node: node }
+        break
       end
     end
+
+    fail "Lineage doesn't have an intersection with the main tree" if found == nil
+
+    subtree = Node.from_lineage lineage[(found[:index] + 1)...]
+    found[:node].children.push(subtree)
   end
 
   # @param depth [Integer]

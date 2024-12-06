@@ -3,8 +3,9 @@
 require 'json'
 require_relative 'lib'
 require_relative 'tree'
+require_relative 'wikipedia'
 
-TRUNCATED_ROOT = ''
+TRUNCATED_ROOT = 'Ornithodira'
 
 SKIPS = [
   { from: 'Dinosauriformes', to: 'Dracohors', display: '...' },
