@@ -1,101 +1,15 @@
 #!/bin/env ruby
 
 require 'json'
+require_relative 'lib'
+require_relative 'tree'
 
-class Node
-  attr_accessor :name, :children
-
-  def initialize(name, children)
-    @name = name
-    @children = children
-  end
-end
-
-# @param root [Node]
-# @param name [String]
-def find_node(root, name)
-  if root.name == name
-    return root
-  end
-
-  root.children.each do |n|
-    result = find_node n, name
-    return result if result != nil
-  end
-  nil
-end
-
-# @param root [Node]
-# @param node_name [String]
-# @param child [Node]
-def insert_node(root, node_name, child)
-  find = find_node root, node_name
-  if find != nil
-    find.children.push(child)
-    return find
-  end
-  nil
-end
-
-# @param root [Node]
-# @param depth [Integer]
-def print_tree(root, depth)
-  indentation = '  ' * depth
-  if depth == 0
-    puts "#{indentation}<#{root.name}>"
-  end
-  root.children.each do |c|
-    puts "#{indentation}  #{c.name}"
-    print_tree c, depth + 1
-  end
-end
-
-test_node = Node.new('a', [
-  Node.new('b', [Node.new('c', []), Node.new('d', [Node.new('g', [Node.new('h', [])])])]),
-  Node.new('e', []),
-  Node.new('f', [Node.new('i', [])]),
-  Node.new('j', []),
-])
-
-# @param root [Node]
-# @param lineage [Array<String>]
-def insert_lineage(root, lineage)
-  catch(:done) do
-    while true
-      (0...lineage.length).reverse_each do |i|
-        found = find_node root, lineage[i]
-        if found != nil
-          throw :done if i + 1 >= lineage.length
-          next_name = lineage[i + 1]
-          found.children.push(Node.new(next_name, []))
-          break
-        end
-      end
-    end
-  end
-end
-
-class Tree
-  attr_accessor :root
-
-  def initialize
-    @root = nil
-  end
-
-  # @param lineage [Array<String>]
-  def add_lineage(lineage)
-    if @root == nil
-      @root = Node.new(lineage[0], [])
-    end
-
-    insert_lineage @root, lineage
-  end
-end
+TRUNCATED_ROOT = 'Ornithodira'
 
 # @param root [Node]
 def to_map(root)
   {
-    :name => root.name,
+    :value => root.value,
     :children => root.children.map { |c| to_map(c) },
   }
 end
@@ -103,7 +17,7 @@ end
 # @param root [Node]
 def to_wolfram(root)
   def to_wolfram_inner(root, depth)
-    name = root.name
+    name = root.value.format_chinese_name
     if name.include?('：')
       name = name.gsub(/^(.*)：(.*)$/, '[\1] \2')
     end
@@ -117,9 +31,10 @@ def to_wolfram(root)
     end.join(', ')
 
     stylized_name = %{Style["#{name}", FontSize -> Larger]}
-    # add some attributes to the most outer Tree
-    if depth == 0
-      return %{Tree[#{stylized_name}, {#{subtrees_str}}, TreeElementStyle -> {TreeCases[_?(! StringContainsQ[ToString@#, "["] &)] -> LightOrange}]}
+    orange_node_style = 'TreeElementStyle -> {LightOrange}'
+    if root.children.length == 0
+      # highlight leaves
+      return %{Tree[#{stylized_name}, {#{subtrees_str}}, #{orange_node_style}]}
     end
     %{Tree[#{stylized_name}, {#{subtrees_str}}]}
   end
@@ -127,12 +42,38 @@ def to_wolfram(root)
   to_wolfram_inner root, 0
 end
 
-read = File.read('lineage.txt')
-lineage_list = read.split("\n\n")
+# @param path [String]
+# @return [Array<Array<Taxon>>]
+def parse_lineage_txt(path)
+  read = File.read path
+  chunks = read.split "\n\n"
+  chunks.map do |c|
+    c.lines(chomp: true).map do |line|
+      # format: rank_display display sci_name
+      split = line.split ' '
+      fail if split.length != 3
+      Taxon.new(split[0], split[1], split[2], nil)
+    end
+  end
+end
+
+# @param lineage [Array<Taxon>]
+# @return [Array<Taxon>]
+def lineage_truncate_root(root_sci_name, lineage)
+  root_index = lineage.rindex { |x| x.sci_name == root_sci_name }
+  fail 'TRUNCATED_ROOT not found' if root_index == nil
+  lineage = lineage[root_index...]
+  fail if lineage == nil
+  lineage
+end
+
+parsed = parse_lineage_txt 'lineage.txt'
 
 tree = Tree.new
-lineage_list.each do |lineage_txt|
-  lineage = lineage_txt.lines(chomp: true).select { |x| !x.empty? }
+parsed.each do |lineage|
+  if TRUNCATED_ROOT != nil
+    lineage = lineage_truncate_root TRUNCATED_ROOT, lineage
+  end
   tree.add_lineage lineage
 end
 

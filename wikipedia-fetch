@@ -2,28 +2,11 @@
 
 require 'nokogiri'
 require 'net/http'
+require_relative 'lib'
 
 # makes Wikipedia display Simplified Han variance
 WIKI_REPLACEMENT = 'zh-cn'
 REQUEST_INTERVAL = 1
-
-class Taxon
-  attr_accessor :rank, :name, :sci_name, :skip, :page_url
-
-  def initialize(rank, name, sci_name, page_url)
-    @rank = rank
-    @name = name
-    @sci_name = sci_name
-    @skip = false
-    @page_url = page_url
-  end
-
-  def self.skip
-    taxon = Taxon.new(nil, nil, nil, nil)
-    taxon.skip = true
-    taxon
-  end
-end
 
 $request_cache = {}
 
@@ -97,19 +80,26 @@ end
 
 # @param lineage [Array<Taxon>]
 def format_lineage(lineage)
-  lineage.map { |x| "#{x.rank}：#{x.name}" }.join("\n")
+  lineage.map { |x| "#{x.rank_display}：#{x.display}" }.join("\n")
 end
 
 names = File.open('source.txt').read.lines(chomp: true).map { |x| x.split ' ' }.filter { |x| x.length == 2 }
 
+out_file = 'lineage.txt'
+
+File.delete out_file if File.exist? out_file
 names.each do |tuple|
   puts "Fetching #{tuple[0]}..."
   page = "https://zh.wikipedia.org/wiki/Template:Taxonomy/#{tuple[1]}"
   lineage = fetch_full_lineage page
-  output = format_lineage lineage
-  output += "\n#{tuple[0]}"
-  File.open('lineage.txt', 'a+') do |f|
+  # output = format_lineage lineage
+  # output += "\n#{tuple[0]}"
+  output = ''
+  lineage.each do |taxon|
+    output += "#{taxon.rank_display} #{taxon.display} #{taxon.sci_name}\n"
+  end
+  File.open(out_file, 'a+') do |f|
     f.write(output)
-    f.write("\n\n")
+    f.write("\n")
   end
 end
