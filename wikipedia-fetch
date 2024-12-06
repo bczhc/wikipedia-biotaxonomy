@@ -21,8 +21,10 @@ names.each do |tuple|
   # output += "\n#{tuple[0]}"
   output = ''
   lineage.each do |taxon|
-    output += "#{taxon.rank_display} #{taxon.display} #{taxon.sci_name}\n"
+    output += "#{taxon.rank_display},#{taxon.display},#{taxon.sci_name}\n"
   end
+  # a workaround for dummy species names
+  output += ",#{tuple[0]},N/A-#{tuple[0]}\n"
   File.open(out_file, 'a+') do |f|
     f.write(output)
     f.write("\n")

@@ -58,7 +58,9 @@ class Node
 
     fail "Lineage doesn't have an intersection with the main tree" if found == nil
 
-    subtree = Node.from_lineage lineage[(found[:index] + 1)...]
+    remain = lineage[(found[:index] + 1)...]
+    return if remain.empty?
+    subtree = Node.from_lineage remain
     found[:node].children.push(subtree)
   end
 
@@ -84,6 +86,8 @@ class Tree
 
   # @param lineage [Array<Taxon>]
   def add_lineage(lineage)
+    return if lineage.empty?
+
     if @root == nil
       @root = Node.new(lineage[0], [])
     end

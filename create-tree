@@ -5,17 +5,20 @@ require_relative 'lib'
 require_relative 'tree'
 require_relative 'wikipedia'
 
-TRUNCATED_ROOT = 'Ornithodira'
+TRUNCATED_ROOT = ''
 
-SKIPS = [
-  { from: 'Dinosauriformes', to: 'Dracohors', display: '...' },
-  { from: 'Eusaurischia', to: 'Orionides', display: '...' },
-  { from: 'Maniraptoromorpha', to: 'Pennaraptora', display: '...' },
-  { from: 'Amorphea', to: 'Choanozoa', display: '...' },
-  { from: 'Eumetazoa', to: 'Deuterostomia', display: '...' },
-  { from: 'Olfactores', to: 'Stegocephalia', display: '...' },
-  { from: 'Reptiliomorpha', to: 'Crurotarsi', display: '...' },
-]
+def parse_omits
+  file = './omits.txt'
+  return [] unless File.exist? file
+  File.open(file).readlines(chomp: true).map do |line|
+    next if line.empty?
+    split = line.split ','
+    fail if split.length != 3
+    { from: split[0], to: split[1], display: split[2] }
+  end
+end
+
+SKIPS = parse_omits
 
 # @param root [Node]
 def to_map(root)
@@ -58,7 +61,7 @@ def parse_lineage_txt(path)
   chunks.map do |c|
     c.lines(chomp: true).map do |line|
       # format: rank_display display sci_name
-      split = line.split ' '
+      split = line.split ','
       fail if split.length != 3
       Taxon.new(split[0], split[1], split[2], nil)
     end

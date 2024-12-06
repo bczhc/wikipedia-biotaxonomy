@@ -43,6 +43,9 @@ class Taxon
     if @skip
       return '...'
     end
+    if @rank_display.empty?
+      return "#{@display}"
+    end
     "[#{@rank_display}] #{@display}"
   end
 end
