@@ -41,6 +41,8 @@ A basic example:
    Tree[Style["...", FontSize -> Larger], {Tree[Style["[总目] 恐龙总目", FontSize -> Larger], {Tree[Style["[目] 蜥臀目", FontSize -> Larger], {Tree[Style["[演化支] 真蜥臀类", FontSize -> Larger], {Tree[Style["[亚目] 兽脚亚目", FontSize -> Larger], {Tree[Style["[演化支] 新兽脚类", FontSize -> Larger], {Tree[Style["[演化支] 鸟吻类", FontSize -> Larger], {Tree[Style["[演化支] 坚尾龙类", FontSize -> Larger], {Tree[Style["[演化支] 俄里翁龙类", FontSize -> Larger], {Tree[Style["[演化支] 鸟兽脚类", FontSize -> Larger], {Tree[Style["[演化支] 虚骨龙类", FontSize -> Larger], {Tree[Style["[演化支] 暴盗龙类", FontSize -> Larger], {Tree[Style["[总科] †暴龙总科", FontSize -> Larger], {Tree[Style["[演化支] †泛暴龙类", FontSize -> Larger], {Tree[Style["[演化支] †真暴龙类", FontSize -> Larger], {Tree[Style["[科] †暴龙科", FontSize -> Larger], {Tree[Style["[亚科] †暴龙亚科", FontSize -> Larger], {Tree[Style["[族] †暴龙族", FontSize -> Larger], {Tree[Style["[属] †暴龙属", FontSize -> Larger], {Tree[Style["†霸王龙", FontSize -> Larger], {}, TreeElementStyle -> {LightOrange}]}]}]}]}]}]}]}]}]}], Tree[Style["[下目] †肉食龙下目", FontSize -> Larger], {Tree[Style["[科] †棘龙科", FontSize -> Larger], {Tree[Style["[亚科] †棘龙亚科", FontSize -> Larger], {Tree[Style["[族] †棘龙族", FontSize -> Larger], {Tree[Style["[属] †棘龙属", FontSize -> Larger], {Tree[Style["†棘龙", FontSize -> Larger], {}, TreeElementStyle -> {LightOrange}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]
    ```
    
-   Paste it into Wolfram/Mathematica, and you'll get: TODO
+   Paste it into Wolfram/Mathematica, and you'll get
 
-For something I've created using these stuff, see TODO
+   <img src="https://raw.githubusercontent.com/bczhc/wikipedia-biotaxonomy/b9b44b3ad839bf39f1963f3afffd68d65962c1de/res/1.svg" alt="svg"/>
+
+For something I've created using these stuff, see [pdf](https://github.com/bczhc/wikipedia-biotaxonomy/tree/master/pdf).
