@@ -1,0 +1,139 @@
+#!/bin/env ruby
+
+require 'json'
+
+class Node
+  attr_accessor :name, :children
+
+  def initialize(name, children)
+    @name = name
+    @children = children
+  end
+end
+
+# @param root [Node]
+# @param name [String]
+def find_node(root, name)
+  if root.name == name
+    return root
+  end
+
+  root.children.each do |n|
+    result = find_node n, name
+    return result if result != nil
+  end
+  nil
+end
+
+# @param root [Node]
+# @param node_name [String]
+# @param child [Node]
+def insert_node(root, node_name, child)
+  find = find_node root, node_name
+  if find != nil
+    find.children.push(child)
+    return find
+  end
+  nil
+end
+
+# @param root [Node]
+# @param depth [Integer]
+def print_tree(root, depth)
+  indentation = '  ' * depth
+  if depth == 0
+    puts "#{indentation}<#{root.name}>"
+  end
+  root.children.each do |c|
+    puts "#{indentation}  #{c.name}"
+    print_tree c, depth + 1
+  end
+end
+
+test_node = Node.new('a', [
+  Node.new('b', [Node.new('c', []), Node.new('d', [Node.new('g', [Node.new('h', [])])])]),
+  Node.new('e', []),
+  Node.new('f', [Node.new('i', [])]),
+  Node.new('j', []),
+])
+
+# @param root [Node]
+# @param lineage [Array<String>]
+def insert_lineage(root, lineage)
+  catch(:done) do
+    while true
+      (0...lineage.length).reverse_each do |i|
+        found = find_node root, lineage[i]
+        if found != nil
+          throw :done if i + 1 >= lineage.length
+          next_name = lineage[i + 1]
+          found.children.push(Node.new(next_name, []))
+          break
+        end
+      end
+    end
+  end
+end
+
+class Tree
+  attr_accessor :root
+
+  def initialize
+    @root = nil
+  end
+
+  # @param lineage [Array<String>]
+  def add_lineage(lineage)
+    if @root == nil
+      @root = Node.new(lineage[0], [])
+    end
+
+    insert_lineage @root, lineage
+  end
+end
+
+# @param root [Node]
+def to_map(root)
+  {
+    :name => root.name,
+    :children => root.children.map { |c| to_map(c) },
+  }
+end
+
+# @param root [Node]
+def to_wolfram(root)
+  def to_wolfram_inner(root, depth)
+    name = root.name
+    if name.include?('：')
+      name = name.gsub(/^(.*)：(.*)$/, '[\1] \2')
+    end
+    subtrees = root.children.map { |x| to_wolfram_inner x, depth + 1 }
+    subtrees_str = subtrees.map do |x|
+      if x.include?('Tree')
+        x
+      else
+        %{"#{x.gsub('：', '\n')}"}
+      end
+    end.join(', ')
+
+    stylized_name = %{Style["#{name}", FontSize -> Larger]}
+    # add some attributes to the most outer Tree
+    if depth == 0
+      return %{Tree[#{stylized_name}, {#{subtrees_str}}, TreeElementStyle -> {TreeCases[_?(! StringContainsQ[ToString@#, "["] &)] -> LightOrange}]}
+    end
+    %{Tree[#{stylized_name}, {#{subtrees_str}}]}
+  end
+
+  to_wolfram_inner root, 0
+end
+
+read = File.read('lineage.txt')
+lineage_list = read.split("\n\n")
+
+tree = Tree.new
+lineage_list.each do |lineage_txt|
+  lineage = lineage_txt.lines(chomp: true).select { |x| !x.empty? }
+  tree.add_lineage lineage
+end
+
+puts to_wolfram tree.root
