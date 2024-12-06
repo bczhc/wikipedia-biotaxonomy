@@ -4,7 +4,17 @@ require 'json'
 require_relative 'lib'
 require_relative 'tree'
 
-TRUNCATED_ROOT = 'Ornithodira'
+TRUNCATED_ROOT = ''
+
+SKIPS = [
+  { from: 'Dinosauriformes', to: 'Dracohors', display: '...' },
+  { from: 'Eusaurischia', to: 'Orionides', display: '...' },
+  { from: 'Maniraptoromorpha', to: 'Pennaraptora', display: '...' },
+  { from: 'Amorphea', to: 'Choanozoa', display: '...' },
+  { from: 'Eumetazoa', to: 'Deuterostomia', display: '...' },
+  { from: 'Olfactores', to: 'Stegocephalia', display: '...' },
+  { from: 'Reptiliomorpha', to: 'Crurotarsi', display: '...' },
+]
 
 # @param root [Node]
 def to_map(root)
@@ -17,10 +27,7 @@ end
 # @param root [Node]
 def to_wolfram(root)
   def to_wolfram_inner(root, depth)
-    name = root.value.format_chinese_name
-    if name.include?('：')
-      name = name.gsub(/^(.*)：(.*)$/, '[\1] \2')
-    end
+    name = root.value.format_wolfram_node_name
     subtrees = root.children.map { |x| to_wolfram_inner x, depth + 1 }
     subtrees_str = subtrees.map do |x|
       if x.include?('Tree')
@@ -59,21 +66,37 @@ end
 
 # @param lineage [Array<Taxon>]
 # @return [Array<Taxon>]
-def lineage_truncate_root(root_sci_name, lineage)
+def lineage_truncate_root!(lineage, root_sci_name)
   root_index = lineage.rindex { |x| x.sci_name == root_sci_name }
   fail 'TRUNCATED_ROOT not found' if root_index == nil
-  lineage = lineage[root_index...]
-  fail if lineage == nil
-  lineage
+  new_lineage = lineage[root_index...]
+  fail if new_lineage == nil
+  lineage[0...] = new_lineage
+end
+
+# @param lineage [Array<Taxon>]
+# @param replacements [Array<Hash>]
+def lineage_skip_range!(lineage, replacements)
+  replacements.each do |r|
+    from_idx = lineage.index { |x| x.sci_name == r[:from] }
+    to_idx = lineage.index { |x| x.sci_name == r[:to] }
+    next if from_idx == nil or to_idx == nil
+
+    skipped_taxon = Taxon.skip
+    skipped_taxon.display = r[:display]
+    skipped_taxon.skipped_sci_names = lineage[from_idx..to_idx]
+    lineage[from_idx..to_idx] = [skipped_taxon]
+  end
 end
 
 parsed = parse_lineage_txt 'lineage.txt'
 
 tree = Tree.new
 parsed.each do |lineage|
-  if TRUNCATED_ROOT != nil
-    lineage = lineage_truncate_root TRUNCATED_ROOT, lineage
+  if TRUNCATED_ROOT != nil and !TRUNCATED_ROOT.empty?
+    lineage_truncate_root! lineage, TRUNCATED_ROOT
   end
+  lineage_skip_range! lineage, SKIPS
   tree.add_lineage lineage
 end
 
